@@ -1,0 +1,37 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET          =   lora-tools
+PKG_URI         =   git@111.111.11.11:lora_tools.git
+PKG_NAME        =   lora_tools
+PKG_SRC_DIR     =   $(BUILD_DIR)/$(PKG_NAME)
+PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_NAME)
+TARGET_DIR      =   $(INSTALL_DIR)/opt/LoRa_tools
+
+
+$(TARGET): $(PKG_BUILD_DIR)
+	mkdir -p $(TARGET_DIR)
+	cp -R $(PKG_BUILD_DIR)/* $(TARGET_DIR)
+	if [ ! -d $(INSTALL_DIR)/etc/rc3.d ]; then \
+	    mkdir -p $(INSTALL_DIR)/etc/rc3.d; \
+    fi
+#	if [ ! -L $(INSTALL_DIR)/etc/rc3.d/S01set_gpio ]; then \
+#        ln -s ../init.d/set_gpio $(INSTALL_DIR)/etc/rc3.d/S01set_gpio ; \
+#    fi
+	if [ ! -L $(INSTALL_DIR)/etc/rc3.d/S03watchdog ]; then \
+        ln -s ../init.d/watchdog $(INSTALL_DIR)/etc/rc3.d/S03watchdog ; \
+    fi
+#	if [ ! -L $(INSTALL_DIR)/etc/rc3.d/S90lora_pkt_fwd ]; then \
+#        ln -s ../init.d/lora_pkt_fwd $(INSTALL_DIR)/etc/rc3.d/S90lora_pkt_fwd ; \
+#    fi
+
+$(PKG_BUILD_DIR):
+	git clone $(PKG_URI) $@
+
+
+#	cd $(PKG_BUILD_DIR) && git remote show origin && \
+#	has_changes=$$(git remote show origin | grep "local out of date" || true) && \
+#	if [ ! -z "$${has_changes}" ]; then git pull; fi
+#	echo "Nothing todo for $(PKG_NAME)"
+#install_$(TARGET):

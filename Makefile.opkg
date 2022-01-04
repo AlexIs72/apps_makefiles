@@ -1,0 +1,71 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+
+TARGET_NAME = opkg
+#TARGET_VERSION = 2.4.8
+#TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+#TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+#TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+#SRC_URI = https://download.samba.org/pub/ppp/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_NAME)
+TARGET_BIN = $(TARGET_DIR)/src/$(TARGET_NAME)
+TARGET = $(INSTALL_DIR)/bin/$(TARGET_NAME)
+
+$(TARGET): $(TARGET_BIN)
+	$(LOCAL_MAKE) -C $(TARGET_DIR) PREFIX=$(INSTALL_DIR) install
+
+$(TARGET_BIN): $(TARGET_DIR) $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) -C $(TARGET_DIR) 
+
+
+#    CC="$(CROSS_COMPILE)gcc --sysroot=$(SDK_PATH)" \
+#    LD="$(CROSS_COMPILE)ld --sysroot=$(SDK_PATH)" \
+
+#    LIBARCHIVE_LIBS="-L$(INSTALL_DIR)/lib -larchive" \
+#	LIBARCHIVE_CFLAGS="-I$(INSTALL_DIR)/include" \
+#    CURL_CFLAGS="-I$(INSTALL_DIR)/include" \
+#    LT_SYS_LIBRARY_PATH=$(INSTALL_DIR)/lib \
+
+#    CURL_LIBS="-L$(INSTALL_DIR)/lib -lcurl" \
+
+$(TARGET_DIR)/Makefile: $(TARGET_DIR)/configure
+	cd $(TARGET_DIR) && \
+    PKG_CONFIG_PATH="$(INSTALL_DIR)/lib/pkgconfig" \
+    ./configure \
+    --target=$(ARM_HOST) --host=$(ARM_HOST) --build=$(ARCH) \
+    --prefix=$(INSTALL_DIR) \
+    --enable-gpg=no \
+    --with-sysroot=$(SDK_PATH) 
+
+#    LIBARCHIVE_LIBS="-L$(INSTALL_DIR)/lib -larchive" \
+#    CC="$(CROSS_COMPILE)gcc --sysroot=$(SDK_PATH)" \
+#    LD="$(CROSS_COMPILE)ld --sysroot=$(SDK_PATH)" \
+
+#    PKG_CONFIG_PATH="$(INSTALL_DIR)/lib/pkgconfig" \
+
+
+#    --with-static-libopkg \
+
+#    CFLAGS="-I$(INSTALL_DIR)/include" \
+#    LDFLAGS="-L$(INSTALL_DIR)/lib" \
+
+	
+	
+#	CC=$(CROSS_COMPILE)gcc \
+#    ./configure \
+#    --target=$(ARM_HOST) --host=$(ARM_HOST) \
+#    --prefix=$(INSTALL_DIR)
+
+$(TARGET_DIR)/configure:
+	cd $(TARGET_DIR) && ./autogen.sh
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	cd $(BUILD_DIR) && \
+	git clone https://git.yoctoproject.org/git/$(TARGET_NAME).git 
+
+#	cd $(TARGET_DIR) && \
+#	git checkout v0.4.2
+

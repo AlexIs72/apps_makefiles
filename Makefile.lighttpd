@@ -1,0 +1,91 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = lighttpd
+TARGET_VERSION = 1.4.55
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://download.lighttpd.net/lighttpd/releases-1.4.x/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/src/$(TARGET_NAME)
+TARGET = $(INSTALL_DIR)/sbin/$(TARGET_NAME)
+
+$(TARGET):  $(TARGET_DIR) $(TARGET_BIN)
+	$(LOCAL_MAKE) -C $(TARGET_DIR) install
+
+$(TARGET_BIN): $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) -C $(TARGET_DIR) 
+
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+	$(TARGET_DIR)/configure \
+        --host=$(ARM_HOST) \
+        --target=$(ARM_HOST) \
+        --prefix=$(INSTALL_DIR) \
+        --without-bzip2 \
+        --without-pcre 
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH):
+	wget $(SRC_URI) -O $@
+
+
+
+#-----
+#SHELL           =   /bin/bash
+#https://micropython.org/resources/source/micropython-1.12.tar.xz
+#PKG_NAME        =   micropython
+#PKG_VERSION     =   1.12
+#PKG_FULL_NAME   =   $(PKG_NAME)-$(PKG_VERSION)
+#PKG_ARCHIVE     =   $(PKG_FULL_NAME).tar.xz
+#PKG_URL         =   https://micropython.org/resources/source/$(PKG_ARCHIVE)
+#PKG_SRC_DIR		=	$(SRC_DIR)/$(PKG_NAME)
+#PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_FULL_NAME)
+#
+#$(PKG_NAME): $(PKG_BUILD_DIR)/mpy-cross/mpy-cross $(PKG_BUILD_DIR)/$(PKG_NAME)
+#
+#$(PKG_BUILD_DIR)/$(PKG_NAME): 
+#	PKG_CONFIG_PATH="$(BUILD_DIR)/libffi_lib/lib/pkgconfig" \
+#    LD_LIBRARY_PATH="$(TOOLCHAIN_DIR)" \
+#    make V=1 -C $(PKG_BUILD_DIR)/ports/unix -j$(NUM_JOBS)  \
+#        ARCH=$(ARCH) \
+#        CROSS_COMPILE=$(CROSS_COMPILE) \
+#        SYSROOT=$(TOOLCHAIN_DIR)
+
+#        LDFLAGS="-L$(TOOLCHAIN_DIR)/usr/lib" 
+        
+#        CFLAGS="$(CFLAGS) -I $(BUILD_DIR)/libffi_lib/include"
+
+
+
+#        ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+
+#$(PKG_BUILD_DIR)/Makefile: $(PKG_BUILD_DIR)/configure
+#	cd $(PKG_BUILD_DIR) && \
+#    ./configure \
+#    --target=$(ARM_HOST) --host=$(ARM_HOST) \
+#    --prefix=$(TARGET_ROOTFS_DIR)
+
+#$(PKG_BUILD_DIR)/configure:
+#	cd $(PKG_BUILD_DIR) && ./autogen.sh
+
+#$(DL_DIR)/$(PKG_ARCHIVE):
+#	wget --continue --directory-prefix=$(DL_DIR) $(PKG_URL)
+
+#$(PKG_BUILD_DIR): $(DL_DIR)/$(PKG_ARCHIVE)
+#	cd $(BUILD_DIR) && \
+#    tar -xJvf $(DL_DIR)/$(PKG_ARCHIVE) && \
+#    touch $(PKG_BUILD_DIR)
+#
+#install_$(PKG_NAME):
+#	PKG_CONFIG_PATH="$(BUILD_DIR)/libffi_lib/lib/pkgconfig" \
+#    LD_LIBRARY_PATH="$(TOOLCHAIN_DIR)" \
+#	make -C $(PKG_BUILD_DIR)/ports/unix DESTDIR=$(TARGET_ROOTFS_DIR) install
+#
+#prepare_$(PKG_NAME): $(PKG_BUILD_DIR)
+###

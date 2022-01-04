@@ -1,0 +1,82 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+
+LORA_BASE_DIR = $(INSTALL_DIR)/$(LORA_DIR)
+LORA_BIN_DIR = $(LORA_BASE_DIR)/bin
+LORA_CONFIG_DIR = $(LORA_BASE_DIR)/config
+LORA_TESTS_DIR = $(LORA_BASE_DIR)/tests
+GIT_URI = https://github.com/Lora-net/sx1302_hal.git
+SRC_DIR = $(BUILD_DIR)/sx1302_hal
+#BUILD_TARGETS = $(RGET_DIR)/packet_forwarder/packet_forwarder
+#INSTALL_TARGETS = $(LORA_BIN_DIR)/packet_forwarder
+LPF_SRC_DIR = $(SRC_DIR)/packet_forwarder
+LPF_SRC_BIN = $(LPF_SRC_DIR)/lora_pkt_fwd
+LPF_TARGET_BIN = $(LORA_BIN_DIR)/lora_pkt_fwd
+
+#LLGW_SRC_DIR = $(SRC_DIR)/libloragw
+#LLGW_SRC_BIN = $(SRC_DIR)/libloragw/libloragw.a
+
+#LIBTOOLS_SRC_DIR = $(SRC_DIR)/libtools
+#LIBTOOLS_SRC_BIN = $(SRC_DIR)/libtools.a
+
+
+INSTALL_CONF_FILE=$(LORA_BASE_DIR)/config/config.json
+SRC_CONF_FILE=$(TARGET_DIR)/
+
+
+TARGETS = $(LPF_TARGET_BIN) $(LORA_BIN_DIR)/test_loragw_com $(LORA_BIN_DIR)/chip_id $(LORA_BIN_DIR)/reset_lgw.sh $(LORA_CONFIG_DIR)/global_conf.json
+
+all: $(SRC_DIR) $(TARGETS)  
+
+$(LORA_BIN_DIR)/chip_id:
+	cp $(SRC_DIR)/util_chip_id/chip_id $@
+	cp $(SRC_DIR)/util_net_downlink/net_downlink $@
+	cp $(SRC_DIR)/util_spectral_scan/spectral_scan $@
+
+$(LORA_CONFIG_DIR)/global_conf.json:
+	install -d $(LORA_CONFIG_DIR)
+	cat $(LPF_SRC_DIR)/global_conf.json.sx1250.EU868 | \
+	    sed 's|/dev/spidev0.0|/dev/spidev1.0|' | \
+	    sed 's|/dev/ttyS0|/dev/ttyS1|' | \
+	    sed 's/localhost/192.168.30.55/' \
+	    > $(LORA_CONFIG_DIR)/global_conf.json
+
+
+$(LORA_BIN_DIR)/reset_lgw.sh:
+	cat $(SRC_DIR)/tools/reset_lgw.sh | \
+	    sed 's/SX1302_RESET_PIN=23/SX1302_RESET_PIN=115/' | \
+	    sed 's/SX1302_POWER_EN_PIN=18/SX1302_POWER_EN_PIN=13/' | \
+	    sed 's/SX1261_RESET_PIN=22/SX1261_RESET_PIN=87/' | \
+	    sed 's/AD5338R_RESET_PIN=13/AD5338R_RESET_PIN=87/' \
+	    > $(LORA_BIN_DIR)/reset_lgw.sh && chmod +x $(LORA_BIN_DIR)/reset_lgw.sh
+
+$(LORA_BIN_DIR)/test_loragw_com:
+	cp $(LLGW_SRC_DIR)/test_* $(LORA_BIN_DIR)
+
+# Pin 87 unused
+$(LPF_TARGET_BIN): $(LPF_SRC_BIN)
+	cp $(LPF_SRC_BIN) $(LPF_TARGET_BIN)
+#	install -D $(LPF_SRC_BIN) $@
+
+$(LPF_SRC_BIN): $(LLGW_SRC_BIN)
+	$(MAKE) -j$(MAKE_JOBS) -C $(SRC_DIR)
+
+#$(LLGW_SRC_BIN): $(LIBTOOLS_SRC_BIN) 
+#	$(MAKE) -j$(MAKE_JOBS) -C $(LLGW_SRC_DIR)
+
+#$(LIBTOOLS_SRC_BIN):
+#	$(MAKE) -j$(MAKE_JOBS) -C $(LIBTOOLS_SRC_DIR)
+
+$(SRC_DIR):
+	git clone $(GIT_URI) $@
+	cd $@ && git checkout V2.0.2
+
+#$(TARGETS):
+#	$(MAKE) $(MAKE_JOBS) -C $(TARGET_DIR)
+
+#$(INSTALL_DIR):
+#	mkdir -p $@
+
+
+

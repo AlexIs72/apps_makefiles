@@ -1,0 +1,41 @@
+include env.mk
+
+#SRC = http://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = libiconv
+TARGET_VERSION = 1.16
+INSTALLED_VERSION = 2.6.1
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://ftp.gnu.org/pub/gnu/$(TARGET_NAME)/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/lib/.libs/$(TARGET_NAME).so.$(INSTALLED_VERSION)
+TARGET = $(INSTALL_DIR)/lib/$(TARGET_NAME).so.$(INSTALLED_VERSION)
+
+
+$(TARGET): $(TARGET_DIR) $(TARGET_BIN) 
+	$(LOCAL_MAKE) -C $(TARGET_DIR) install
+	libtool --finish $(INSTALL_DIR)/lib
+
+$(TARGET_BIN): $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) -C $(TARGET_DIR)
+
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+	CC=$(CROSS_COMPILE)gcc \
+	./configure \
+        --prefix=$(INSTALL_DIR) \
+        --target=$(ARM_HOST) \
+        --host=$(ARM_HOST) 
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH): 
+	wget $(SRC_URI) -O $@
+
+

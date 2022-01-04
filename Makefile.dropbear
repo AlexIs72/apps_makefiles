@@ -1,0 +1,56 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = dropbear
+TARGET_VERSION = 2017.75
+#2020.81
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.bz2
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://matt.ucc.asn.au/dropbear/releases/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/$(TARGET_NAME)
+TARGET = $(INSTALL_DIR)/sbin/$(TARGET_NAME)
+BUILD_OPTS = PREFIX=$(INSTALL_DIR) PROGRAMS="dropbear dbclient dropbearkey dropbearconvert scp"
+#LZO_DIR=$(BUILD_DIR)/lzo-2.10/.install
+#OPENSSL_DIR=$(BUILD_DIR)/openssl-1.1.1j/.install
+
+
+$(TARGET): $(TARGET_DIR) $(TARGET_BIN) 
+	$(LOCAL_MAKE) -C $(TARGET_DIR) $(BUILD_OPTS) install
+	mkdir -p $(INSTALL_DIR)/etc/dropbear
+#	make -C $(TARGET_DIR) $(BUILD_OPTS) install-dropbear
+
+$(TARGET_BIN): $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) -C $(TARGET_DIR) $(BUILD_OPTS) 
+    
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+    CCFLAGS=-I$(INSTALL_DIR)/include \
+    LDFLAGS=-L$(INSTALL_DIR)/lib \
+	./configure \
+        --target=$(ARM_HOST) \
+        --host=$(ARM_HOST) \
+        --build=i686-pc-linux-gnu \
+        --with-zlib=$(INSTALL_DIR)/lib \
+        --prefix=$(INSTALL_DIR) 
+
+#    CC=$(CROSS_COMPILE)gcc \
+
+
+#        --disable-zlib \
+
+#    CC=$(CROSS_COMPILE)gcc \
+
+
+#    PKG_CONFIG_LIBDIR=$(INSTALL_DIR)/lib/pkgconfig \
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH): 
+	wget $(SRC_URI) -O $@
+
+

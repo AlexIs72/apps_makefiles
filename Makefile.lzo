@@ -1,0 +1,61 @@
+SHELL           =   /bin/bash
+PKG_NAME        =   lzo
+#http://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
+PKG_VERSION     =   2.10
+PKG_FULL_NAME   =   $(PKG_NAME)-$(PKG_VERSION)
+PKG_ARCHIVE     =   $(PKG_FULL_NAME).tar.gz
+PKG_URL         =   http://www.oberhumer.com/opensource/lzo/download/$(PKG_ARCHIVE)
+PKG_SRC_DIR		=	$(SRC_DIR)/$(PKG_FULL_NAME)
+PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_FULL_NAME)
+PKG_TARGET_DIR  =   $(BUILD_DIR)/$(PKG_NAME)_lib
+#CONFIG_FILE     =   $(PKG_BUILD_DIR)/.config
+
+$(PKG_NAME): $(PKG_BUILD_DIR)/bin/$(PKG_NAME)
+#$(TARGET_ROOTFS_DIR)/usr/bin/$(PKG_NAME)
+#$(PKG_BUILD_DIR)/$(PKG_NAME) 
+
+$(PKG_BUILD_DIR)/bin/$(PKG_NAME): $(PKG_BUILD_DIR)/Makefile
+#$(PKG_SRC_DIR)
+	make V=1 -C $(PKG_BUILD_DIR) -j$(NUM_JOBS) \
+        ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+	make -C $(PKG_BUILD_DIR) CONFIG_PREFIX=$(TARGET_ROOTFS_DIR) install
+
+#O=$(PKG_BUILD_DIR) 
+
+$(PKG_BUILD_DIR)/Makefile:
+	cd $(PKG_BUILD_DIR) && \
+    $(PKG_SRC_DIR)/configure \
+    --prefix=$(PKG_TARGET_DIR) \
+    --enable-static \
+    --target=$(ARM_HOST) \
+    --host=$(ARM_HOST) \
+    --disable-debug
+    
+#$(PKG_SRC_DIR)/Configure \
+#    linux-generic32 \
+#    no-asm shared no-async \
+#    --openssldir=$(TARGET_ROOTFS_DIR)/etc/ssl \
+#    --prefix=$(PKG_TARGET_DIR)  \
+#    --cross-compile-prefix=$(CROSS_COMPILE)
+#gcc -static -no-shared  --cross-compile-prefix=$(CROSS_COMPILE)
+#--prefix=/home/user/vpn_compile
+
+$(PKG_SRC_DIR): $(DL_DIR)/$(PKG_ARCHIVE)
+	cd $(SRC_DIR) && \
+    tar -xzvf $(DL_DIR)/$(PKG_ARCHIVE) && \
+	touch $(PKG_SRC_DIR)
+
+install_$(PKG_NAME):
+#	make -C $(PKG_BUILD_DIR) CONFIG_PREFIX=$(TARGET_ROOTFS_DIR) install
+#	cp -aR $(PKG_TARGET_DIR)/{bin,lib} $(TARGET_ROOTFS_DIR)/usr
+
+$(DL_DIR)/$(PKG_ARCHIVE):
+	wget --continue --directory-prefix=$(DL_DIR) $(PKG_URL)
+
+$(PKG_BUILD_DIR):
+	mkdir -p $@
+
+#$(CONFIG_FILE): $(PKG_BUILD_DIR)
+#	cp $(PATCHES)/busybox_config $(PKG_BUILD_DIR)/.config 
+
+prepare_$(PKG_NAME): $(PKG_SRC_DIR) $(PKG_BUILD_DIR)

@@ -1,0 +1,35 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+
+TARGET_DIR = $(APPS_DIR)/packet_forwarder_v2
+LPF_TARGET_DIR = $(INSTALL_DIR)/$(LORA_DIR)/bin
+LPF_TARGET_BIN = $(LPF_TARGET_DIR)/pkt_forwarder
+LPF_SRC_DIR = $(TARGET_DIR)/pkt_forwarder
+LPF_SRC_BIN = $(LPF_SRC_DIR)/pkt_forwarder
+
+TARGETS = $(LPF_TARGET_BIN) $(LORA_BIN_DIR)/test_loragw_com $(LORA_BIN_DIR)/reset_lgw.sh 
+#$(LORA_CONFIG_DIR)/global_conf.json
+
+all: $(INSTALL_DIR) $(LPF_TARGET_DIR) $(TARGETS)  
+
+$(LPF_TARGET_BIN): $(LPF_SRC_BIN)
+	cp $(LPF_SRC_BIN) $(LPF_TARGET_DIR)
+	cp $(TARGET_DIR)/util_net_ack/net_ack $(LPF_TARGET_DIR)
+	cp $(TARGET_DIR)/util_net_downlink/net_downlink $(LPF_TARGET_DIR)
+	cp $(TARGET_DIR)/util_net_srv/net_srv $(LPF_TARGET_DIR)
+	cp $(TARGET_DIR)/util_net_uplink/net_uplink $(LPF_TARGET_DIR)
+
+$(LORA_BIN_DIR)/test_loragw_com:
+
+$(LORA_BIN_DIR)/reset_lgw.sh:
+
+
+$(LPF_SRC_BIN):
+	$(MAKE) -j$(MAKE_JOBS) -C $(TARGET_DIR)
+
+$(INSTALL_DIR) $(LPF_TARGET_DIR) :
+	mkdir -p $@
+
+
+

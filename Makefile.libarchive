@@ -1,0 +1,97 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = libarchive
+TARGET_VERSION = 3.4.3
+#13.5.2
+#TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+#TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+#TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+#SRC_URI = ftp://sourceware.org/pub/$(PKG_NAME)/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_NAME)
+TARGET_BIN = $(TARGET_DIR)/.libs/$(TARGET_NAME).so.$(TARGET_VERSION)
+TARGET = $(INSTALL_DIR)/lib/$(TARGET_NAME).so.$(TARGET_VERSION)
+#UILD_OPTS = PREFIX=$(INSTALL_DIR) CROSS_COMPILE=$(CROSS_COMPILE)
+#OPTS = CC=$(CROSS_COMPILE)gcc 
+
+
+$(TARGET): $(TARGET_DIR) $(TARGET_BIN)
+	$(LOCAL_MAKE) -C $(TARGET_DIR) install
+
+$(TARGET_BIN): $(TARGET_DIR)/configure  $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) -C $(TARGET_DIR)
+
+$(TARGET_DIR)/configure:
+	cd $(TARGET_DIR) && build/autogen.sh
+
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+    ./configure \
+    --target=$(ARM_HOST) --host=$(ARM_HOST) \
+    --prefix=$(INSTALL_DIR) \
+    --without-expat \
+    --with-libiconv-prefix=$(INSTALL_DIR)
+
+
+#	CC=$(CROSS_COMPILE)gcc \
+
+#    --without-libiconv-prefix \
+
+$(TARGET_DIR): 
+	cd $(BUILD_DIR) && \
+	git clone https://github.com/libarchive/libarchive.git
+
+#$(TARGET_ARCH)
+#	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+#$(TARGET_ARCH):
+#	wget $(SRC_URI) -O $@
+
+
+
+# ---
+#SHELL           =   /bin/bash
+#PKG_NAME        =   libffi
+#PKG_VERSION     =   3.3
+#ftp://sourceware.org/pub/libffi/libffi-3.3.tar.gz
+#PKG_FULL_NAME   =   $(PKG_NAME)-$(PKG_VERSION)
+#PKG_ARCHIVE     =   $(PKG_FULL_NAME).tar.gz
+#PKG_URL         =   ftp://sourceware.org/pub/$(PKG_NAME)/$(PKG_ARCHIVE)
+#PKG_SRC_DIR		=	$(SRC_DIR)/$(PKG_FULL_NAME)
+#PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_FULL_NAME)
+#PKG_TARGET_DIR  =   $(BUILD_DIR)/$(PKG_NAME)_lib
+
+#$(PKG_NAME): $(PKG_BUILD_DIR)/$(PKG_NAME)
+
+#$(PKG_BUILD_DIR)/$(PKG_NAME): $(PKG_BUILD_DIR)/Makefile
+#$(PKG_SRC_DIR)
+#	make V=1 -C $(PKG_BUILD_DIR) -j$(NUM_JOBS) \
+#        ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+#	make -C $(PKG_BUILD_DIR) CONFIG_PREFIX=$(PKG_TARGET_DIR) install
+
+#O=$(PKG_BUILD_DIR) 
+
+#$(PKG_BUILD_DIR)/Makefile:
+
+#$(PKG_SRC_DIR): $(DL_DIR)/$(PKG_ARCHIVE)
+#	cd $(SRC_DIR) && \
+#    tar -xzvf $(DL_DIR)/$(PKG_ARCHIVE) && \
+#	touch $(PKG_SRC_DIR)
+
+#install_$(PKG_NAME):
+#	cp -aR $(PKG_TARGET_DIR)/lib $(TARGET_ROOTFS_DIR)/usr
+#	cp -aR $(PKG_TARGET_DIR)/etc $(TARGET_ROOTFS_DIR)
+#	find $(TARGET_ROOTFS_DIR)/usr/lib  -name "*.a" -o -name "*.la" | xargs rm -f
+
+#$(DL_DIR)/$(PKG_ARCHIVE):
+#	wget --continue --directory-prefix=$(DL_DIR) $(PKG_URL)
+
+#$(PKG_BUILD_DIR):
+#	mkdir -p $@
+
+#$(CONFIG_FILE): $(PKG_BUILD_DIR)
+#	cp $(PATCHES)/busybox_config $(PKG_BUILD_DIR)/.config 
+
+#prepare_$(PKG_NAME): $(PKG_SRC_DIR) $(PKG_BUILD_DIR)

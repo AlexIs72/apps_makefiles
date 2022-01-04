@@ -1,0 +1,38 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+
+TARGET_NAME = nano
+#TARGET_VERSION = 2.4.8
+#TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+#TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+#TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+#SRC_URI = https://download.samba.org/pub/ppp/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_NAME)
+TARGET_BIN = $(TARGET_DIR)/src/$(TARGET_NAME)
+TARGET = $(INSTALL_DIR)/bin/$(TARGET_NAME)
+
+$(TARGET): $(TARGET_BIN)
+	$(LOCAL_MAKE) -C $(TARGET_DIR) PREFIX=$(INSTALL_DIR) install
+
+$(TARGET_BIN): $(TARGET_DIR) $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) -C $(TARGET_DIR) 
+
+$(TARGET_DIR)/Makefile: $(TARGET_DIR)/configure
+	cd $(TARGET_DIR) && \
+    ./configure \
+    --target=$(ARM_HOST) --host=$(ARM_HOST) \
+    --prefix=$(INSTALL_DIR)
+
+
+#	CC=$(CROSS_COMPILE)gcc \
+
+$(TARGET_DIR)/configure:
+	cd $(TARGET_DIR) && ./autogen.sh
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	cd $(BUILD_DIR) && \
+	git clone git://git.savannah.gnu.org/$(TARGET_NAME).git 
+

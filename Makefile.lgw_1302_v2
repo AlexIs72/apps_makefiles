@@ -1,0 +1,16 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+
+TARGET_DIR = $(APPS_DIR)/lora_gateway_v2
+TARGETS = $(TARGET_DIR)/libsx1301ar/libsx1301ar.a
+
+all: $(INSTALL_DIR) $(TARGETS) 
+
+$(TARGETS):
+	$(MAKE) -j$(MAKE_JOBS) -C $(TARGET_DIR)
+
+$(INSTALL_DIR):
+	mkdir -p $@
+
+

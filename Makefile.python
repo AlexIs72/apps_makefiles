@@ -1,0 +1,57 @@
+SHELL           =   /bin/bash
+#https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tar.xz
+PKG_NAME        =   python
+PKG_VERSION     =   3.8.5
+PKG_FULL_NAME   =   Python-$(PKG_VERSION)
+PKG_ARCHIVE     =   $(PKG_FULL_NAME).tar.xz
+PKG_URL         =   https://www.python.org/ftp/$(PKG_NAME)/$(PKG_VERSION)/$(PKG_ARCHIVE)
+PKG_SRC_DIR		=	$(SRC_DIR)/$(PKG_FULL_NAME)
+PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_FULL_NAME)
+
+$(PKG_NAME): $(PKG_BUILD_DIR)/$(PKG_NAME)
+
+$(PKG_BUILD_DIR)/$(PKG_NAME): $(PKG_BUILD_DIR)/Makefile
+#	PKG_CONFIG_PATH="$(BUILD_DIR)/libffi_lib/lib/pkgconfig" \
+#    LD_LIBRARY_PATH="$(TOOLCHAIN_DIR)" 
+	make V=1 -C $(PKG_BUILD_DIR) -j$(NUM_JOBS)  \
+        ARCH=$(ARCH) \
+        CROSS_COMPILE=$(CROSS_COMPILE) \
+        SYSROOT=$(TOOLCHAIN_DIR)
+
+#        LDFLAGS="-L$(TOOLCHAIN_DIR)/usr/lib" 
+        
+#        CFLAGS="$(CFLAGS) -I $(BUILD_DIR)/libffi_lib/include"
+
+#$(PKG_BUILD_DIR)/mpy-cross/mpy-cross:
+#	make V=1 -C $(PKG_BUILD_DIR)/mpy-cross -j$(NUM_JOBS) CROSS_COMPILE=
+
+
+#        ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+
+$(PKG_BUILD_DIR)/Makefile: 
+	cd $(PKG_BUILD_DIR) && \
+    $(PKG_SRC_DIR)/configure \
+    --build=$(ARCH)
+    --target=$(ARM_HOST) --host=$(ARM_HOST) \
+    --prefix=$(TARGET_ROOTFS_DIR)
+
+#$(PKG_BUILD_DIR)/configure:
+#	cd $(PKG_BUILD_DIR) && ./autogen.sh
+
+$(DL_DIR)/$(PKG_ARCHIVE):
+	wget --continue --directory-prefix=$(DL_DIR) $(PKG_URL)
+
+$(PKG_SRC_DIR): $(DL_DIR)/$(PKG_ARCHIVE)
+	cd $(SRC_DIR) && \
+    tar -xJvf $(DL_DIR)/$(PKG_ARCHIVE) && \
+    touch $(PKG_SRC_DIR)
+
+$(PKG_BUILD_DIR): 
+	mkdir -p $@
+
+install_$(PKG_NAME):
+#	PKG_CONFIG_PATH="$(BUILD_DIR)/libffi_lib/lib/pkgconfig" \
+#    LD_LIBRARY_PATH="$(TOOLCHAIN_DIR)" 
+	make -C $(PKG_BUILD_DIR) DESTDIR=$(TARGET_ROOTFS_DIR) install
+
+prepare_$(PKG_NAME): $(PKG_BUILD_DIR) $(PKG_SRC_DIR)

@@ -1,0 +1,27 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+
+TARGET_DIR = $(APPS_DIR)/packet_forwarder_v2
+LPF_TARGET_BIN = $(INSTALL_DIR)/$(LORA_DIR)/bin/pkt_forwarder
+LPF_SRC_DIR = $(TARGET_DIR)/pkt_forwarder
+LPF_SRC_BIN = $(LPF_SRC_DIR)/pkt_forwarder
+
+TARGETS = $(LPF_TARGET_BIN)
+
+all: $(TARGETS)  
+
+$(LPF_TARGET_BIN): $(LPF_SRC_BIN)
+	install -D $(LPF_SRC_BIN) $@
+
+$(LPF_SRC_BIN):
+	$(MAKE) -j$(MAKE_JOBS) -C $(LPF_SRC_DIR)
+
+#$(TARGETS):
+#	$(MAKE) $(MAKE_JOBS) -C $(TARGET_DIR)
+
+#$(INSTALL_DIR):
+#	mkdir -p $@
+
+
+

@@ -1,0 +1,49 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = ppp
+TARGET_VERSION = 2.4.8
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://download.samba.org/pub/ppp/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/pppd/$(TARGET_NAME)d
+TARGET = $(INSTALL_DIR)/sbin/$(TARGET_NAME)d
+BUILD_OPTS = PREFIX=$(INSTALL_DIR) 
+
+export PATH:=$(SDK_PATH)/bin/:$(SDK_PATH)/arm-nuvoton-linux-uclibceabi/bin:$(SDK_PATH)/libexec/gcc/arm-nuvoton-linux-uclibceabi/4.8.4:${PATH}
+
+$(TARGET): $(TARGET_BIN) 
+	$(LOCAL_MAKE) -C $(TARGET_DIR) PREFIX=$(INSTALL_DIR) install
+
+$(TARGET_BIN): $(TARGET_DIR) $(TARGET_DIR)/Makefile
+	LDFLAGS=-L$(INSTALL_DIR)/lib \
+	$(LOCAL_MAKE) -C $(TARGET_DIR) $(BUILD_OPTS)
+    
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+	./configure \
+        --target=$(ARM_HOST) \
+        --host=$(ARM_HOST) \
+        --build=i686-pc-linux-gnu \
+        --prefix=$(INSTALL_DIR) \
+        --cross_compile=$(CROSS_COMPILE) \
+        --cflags=-I$(INSTALL_DIR)/include    \
+        
+        
+#        --disable-plugins \
+#        --disable-debug
+
+
+#        --cc=gcc \
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH):
+	wget $(SRC_URI) -O $@
+
+

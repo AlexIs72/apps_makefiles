@@ -1,0 +1,64 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = iw
+TARGET_VERSION = 4.9
+
+#3.15
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://git.kernel.org/pub/scm/linux/kernel/git/jberg/iw.git/snapshot/$(TARGET_ARCH_NAME)
+#https://github.com/stedolan/jq/releases/download/$(PKG_FULL_NAME)/$(TARGET_ARCH_NAME)
+#https://matt.ucc.asn.au/dropbear/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/$(TARGET_NAME)
+TARGET = $(INSTALL_DIR)/bin/$(TARGET_NAME)
+#LZO_DIR=$(BUILD_DIR)/lzo-2.10/.install
+#OPENSSL_DIR=$(BUILD_DIR)/openssl-1.1.1j/.install
+
+#export PKG_CONFIG_PATH=$(INSTALL_DIR)/lib/pkgconfig
+
+
+$(TARGET): $(TARGET_DIR) $(TARGET_BIN) 
+	PKG_CONFIG_PATH=$(INSTALL_DIR)/lib/pkgconfig \
+	$(MAKE) -C $(TARGET_DIR) PREFIX=$(INSTALL_DIR) install
+
+$(TARGET_BIN): $(TARGET_DIR)/Makefile
+#	export PKG_CONFIG_PATH=$(INSTALL_DIR)/usr/lib/pkgconfig && 
+#	NO_PKG_CONFIG=1 
+#PREFIX=$(INSTALL_DIR) 
+	PKG_CONFIG_PATH=$(INSTALL_DIR)/lib/pkgconfig \
+	CFLAGS="-I$(INSTALL_DIR)/include/libnl3" \
+    LIBS="-L$(INSTALL_DIR)/lib" \
+    VERBOSE=1 \
+	$(LOCAL_MAKE) -C $(TARGET_DIR)
+
+#	CC=$(CROSS_COMPILE)gcc \
+    
+#$(TARGET_DIR)/Makefile:
+#	cd $(TARGET_DIR) && \
+#    CC=$(CROSS_COMPILE)gcc \
+#    CFLAGS="-I$(INSTALL_DIR)/include" \
+#    LIBS="-L$(INSTALL_DIR)/lib" \
+#	./configure \
+#        --target=$(ARM_HOST) \
+#        --host=$(ARM_HOST) \
+#        --build=i686-pc-linux-gnu \
+#        --prefix=$(INSTALL_DIR) \
+#        --disable-maintainer-mode \
+#        --enable-shared=no \
+#        --without-oniguruma 
+
+#    CC=$(CROSS_COMPILE)gcc \
+
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH): 
+	wget $(SRC_URI) -O $@
+
+

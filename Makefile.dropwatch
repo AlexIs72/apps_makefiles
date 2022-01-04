@@ -1,0 +1,68 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+#LORA_DIR ?= $(INSTALL_DIR)/LoRa
+TARGET_DIR = $(INSTALL_DIR)/$(LORA_BIN_DIR)
+
+TARGET_NAME = dropwatch
+GIT_URI = https://github.com/nhorman/dropwatch.git
+SRC_DIR = $(BUILD_DIR)/dropwatch
+#TARGET_DIR = $(SRC_DIR)
+SRC_BIN = $(SRC_DIR)/src/$(TARGET_NAME)
+TARGET_BIN = $(INSTALL_DIR)/usr/bin/$(TARGET_NAME)
+
+all: $(SRC_DIR) $(TARGET) 
+#	cp $(TARGET) $(INSTALL_DIR)/sbin
+	$(MAKE) -C $(SRC_DIR) install
+	
+
+$(TARGET): $(SRC_DIR)/Makefile
+#	cd $(LPD_BUILD_DIR)/.build && 
+#	cmake -S$(SRC_DIR) -B$(LPD_BUILD_DIR) -DCMAKE_CXX_COMPILER=$(CROSS_COMPILE)g++ 
+	$(MAKE) -j$(MAKE_JOBS) -C $(SRC_DIR)
+
+#	LIBNL3_CFLAGS=-I$(INSTALL_DIR)/include/libnl3 \
+#	LIBNL3_LIBS="-L$(INSTALL_DIR)/lib -lnl-3" \
+#	LIBPCAP_CFLAGS=-I$(INSTALL_DIR)/include/pcap \
+#	LIBPCAP_LIBS="-L$(INSTALL_DIR)/lib -lpcap" \
+#	LIBNLG3_CFLAGS=-I$(INSTALL_DIR)/include/libnl3 \
+#	LIBNLG3_LIBS="-L$(INSTALL_DIR)/lib -lnl-genl-3" \
+#	READLINE_CFLAGS=-I$(INSTALL_DIR)/include \
+#	READLINE_LIBS="-L$(INSTALL_DIR)/lib -lreadline" \
+#	CFLAGS=-I$(INSTALL_DIR)/include \
+
+
+$(SRC_DIR)/Makefile:
+	cd $(SRC_DIR) && \
+	./autogen.sh && \
+	LIBNL3_CFLAGS=-I$(SYSROOT)/usr/include/libnl3 \
+	LIBNL3_LIBS="-L$(SYSROOT)/lib -lnl-3" \
+	LIBNLG3_CFLAGS=-I$(SYSROOT)/include/libnl3 \
+	LIBNLG3_LIBS="-L$(SYSROOT)/lib -lnl-genl-3" \
+	READLINE_CFLAGS=-I$(SYSROOT)/include \
+	READLINE_LIBS="-L$(SYSROOT)/lib -lreadline" \
+	LIBPCAP_CFLAGS=-I$(INSTALL_DIR)/include/pcap \
+	LIBPCAP_LIBS="-L$(INSTALL_DIR)/lib -lpcap" \
+	CFLAGS=-I$(INSTALL_DIR)/include \
+	LDFLAGS="-L$(INSTALL_DIR)/lib -lpcap" \
+    ./configure \
+        ${CONFIGURE_FLAGS} \
+        --with-sysroot=$(SYSROOT) \
+        --without-bfd \
+        --prefix=$(INSTALL_DIR)
+
+#	CC=$(CROSS_COMPILE)gcc \
+
+#        --target=arm-linux \
+#        --host=arm-linux \
+#        --build=i686-pc-linux-gnu \
+
+	
+	
+
+$(SRC_DIR):
+	git clone $(GIT_URI) $@
+#	sed -i 's/CC=gcc/CC?=gcc/' $@/Makefile
+
+
+

@@ -1,0 +1,30 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+#LORA_DIR ?= $(INSTALL_DIR)/LoRa
+TARGET_DIR = $(INSTALL_DIR)
+
+TARGET_NAME = i2c-tools
+GIT_URI = git://git.kernel.org/pub/scm/utils/i2c-tools/i2c-tools.git
+SRC_DIR = $(BUILD_DIR)/$(TARGET_NAME)
+TARGET = $(SRC_DIR)/$(TARGET_NAME)
+
+
+
+all: $(SRC_DIR) $(TARGET) 
+#	cp $(TARGET) $(TARGET_DIR)
+	$(MAKE) -C $(SRC_DIR) PREFIX=$(TARGET_DIR) INSTALL_DIR="install -m 755 -d" install
+
+
+$(TARGET):
+	$(MAKE) -j$(MAKE_JOBS) -C $(SRC_DIR) CC=$(CROSS_COMPILE)gcc USE_STATIC_LIB=1
+
+#$(LORA_INSTALL_DIR) $(LORA_CONFIG_DIR) $(LORA_BIN_DIR):
+#	mkdir -p $@
+
+$(SRC_DIR):
+	/usr/bin/git clone $(GIT_URI) $@
+#sed -i 's/CC=gcc/CC?=gcc/' $@/Makefile
+
+
+

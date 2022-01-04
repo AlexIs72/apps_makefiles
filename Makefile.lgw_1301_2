@@ -1,0 +1,38 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+
+TARGET_DIR = $(APPS_DIR)/lora_gateway_v2
+TARGETS = $(TARGET_DIR)/libsx1301ar/libsx1301ar.a $(LORA_BIN_DIR)/chip_id
+LORA_INSTALL_DIR = $(INSTALL_DIR)/$(LORA_DIR)
+LORA_BIN_DIR = $(LORA_INSTALL_DIR)/bin
+LORA_FPGA_DIR = $(BOOT_PARTITION_DIR)/fpga
+
+
+all: $(INSTALL_DIR) $(LORA_BIN_DIR) $(TARGETS) $(LORA_FPGA_DIR)
+
+$(TARGET_DIR)/libsx1301ar/libsx1301ar.a:
+	$(MAKE) -j$(MAKE_JOBS) -C $(TARGET_DIR)
+
+$(LORA_BIN_DIR)/chip_id:
+	cp $(TARGET_DIR)/util_chip_id/chip_id $(LORA_BIN_DIR)
+	cp $(TARGET_DIR)/util_pkt_logger/pkt_logger $(LORA_BIN_DIR)
+	cp $(TARGET_DIR)/util_send_pkt/send_pkt $(LORA_BIN_DIR)
+	cp $(TARGET_DIR)/util_spectral_scan/spectral_scan $(LORA_BIN_DIR)
+	cp $(TARGET_DIR)/util_tx_continuous/tx_continuous $(LORA_BIN_DIR)
+	cp $(TARGET_DIR)/libsx1301ar/tst/test_* $(LORA_BIN_DIR)
+	rm -f $(LORA_BIN_DIR)/*.c
+
+$(LORA_FPGA_DIR):
+	mkdir -p $@
+	cp $(PWD)/fpga/master/GW2_CYCLONEV_v61_DSP_v37_SX1388-W11-VEGAABSOLUTE.jic $@
+	cp $(PWD)/fpga/master/burn_master.sh $@
+	cp $(PWD)/fpga/slave/GW2_CYCLONEV_v8_DSP_v35_SX1388_EXT-W11-VEGAABSOLUTE.jic $@
+	cp $(PWD)/fpga/slave/burn_slave.sh $@
+	cp $(TARGET_DIR)/util_fpga_flash_loader/fpga_flash_loader $@
+
+	
+$(INSTALL_DIR) $(LORA_BIN_DIR):
+	mkdir -p $@
+
+

@@ -1,0 +1,102 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = dbus
+TARGET_VERSION = 1.13.6
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://dbus.freedesktop.org/releases/$(TARGET_NAME)/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/bus/dbus-daemon
+TARGET = $(INSTALL_DIR)/bin/dbus-daemon
+LIBEXPAT_LIB_DIR =   $(INSTALL_DIR)
+
+MAKE_PARAMS = -C $(TARGET_DIR)
+# ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+
+#BUILD_OPTS = ARCH=$(ARCH) CONFIG_PREFIX=$(INSTALL_DIR) CROSS_COMPILE=$(CROSS_COMPILE)
+
+
+#PKG_NAME        =   dbus
+#https://dbus.freedesktop.org/releases/dbus/dbus-1.13.6.tar.gz
+#PKG_VERSION     =   1.13.6
+#PKG_FULL_NAME   =   $(PKG_NAME)-$(PKG_VERSION)
+#PKG_ARCHIVE     =   $(PKG_FULL_NAME).tar.gz
+#PKG_URL         =   https://dbus.freedesktop.org/releases/$(PKG_NAME)/$(PKG_ARCHIVE)
+#PKG_SRC_DIR		=	$(SRC_DIR)/$(PKG_FULL_NAME)
+#PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_FULL_NAME)
+#PKG_TARGET_DIR  =   $(BUILD_DIR)/$(PKG_NAME)_lib
+
+
+$(TARGET): $(TARGET_BIN)
+	mkdir -p $(INSTALL_DIR)
+	$(LOCAL_MAKE) $(MAKE_PARAMS) install
+
+$(TARGET_BIN): $(TARGET_DIR) $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) $(MAKE_PARAMS) 
+
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+    ./configure \
+    --prefix=$(INSTALL_DIR) \
+    --enable-static \
+    --target=$(ARM_HOST) \
+    --host=$(ARM_HOST) \
+    --disable-debug \
+    EXPAT_LIBS="-L$(LIBEXPAT_LIB_DIR)/lib -lexpat" \
+    EXPAT_CFLAGS="-I $(LIBEXPAT_LIB_DIR)/include"
+
+#	CC=$(CROSS_COMPILE)gcc \
+
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH):
+	wget $(SRC_URI) -O $@
+
+# -----
+
+$(PKG_NAME): $(PKG_BUILD_DIR)/bin/$(PKG_NAME)
+
+$(PKG_BUILD_DIR)/bin/$(PKG_NAME): $(PKG_BUILD_DIR)/Makefile
+	make -C $(PKG_BUILD_DIR) -j$(NUM_JOBS) \
+        ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+	make -C $(PKG_BUILD_DIR) CONFIG_PREFIX=$(TARGET_ROOTFS_DIR) install
+
+#O=$(PKG_BUILD_DIR) 
+
+    
+#$(PKG_SRC_DIR)/Configure \
+#    linux-generic32 \
+#    no-asm shared no-async \
+#    --openssldir=$(TARGET_ROOTFS_DIR)/etc/ssl \
+#    --prefix=$(PKG_TARGET_DIR)  \
+#    --cross-compile-prefix=$(CROSS_COMPILE)
+#gcc -static -no-shared  --cross-compile-prefix=$(CROSS_COMPILE)
+#--prefix=/home/user/vpn_compile
+
+$(PKG_SRC_DIR): $(DL_DIR)/$(PKG_ARCHIVE)
+	cd $(SRC_DIR) && \
+    tar -xzvf $(DL_DIR)/$(PKG_ARCHIVE) && \
+	touch $(PKG_SRC_DIR)
+
+install_$(PKG_NAME):
+#	make -C $(PKG_BUILD_DIR) CONFIG_PREFIX=$(TARGET_ROOTFS_DIR) install
+	cp -aR $(PKG_TARGET_DIR)/{bin,lib,libexec,share,var} $(TARGET_ROOTFS_DIR)/usr
+	cp -aR $(PKG_TARGET_DIR)/etc $(TARGET_ROOTFS_DIR)
+	find $(TARGET_ROOTFS_DIR)/usr/lib  -name "*.a" -o -name "*.la" | xargs rm -f
+
+$(DL_DIR)/$(PKG_ARCHIVE):
+	wget --continue --directory-prefix=$(DL_DIR) $(PKG_URL)
+
+$(PKG_BUILD_DIR):
+	mkdir -p $@
+
+#$(CONFIG_FILE): $(PKG_BUILD_DIR)
+#	cp $(PATCHES)/busybox_config $(PKG_BUILD_DIR)/.config 
+
+prepare_$(PKG_NAME): $(PKG_SRC_DIR) $(PKG_BUILD_DIR)

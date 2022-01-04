@@ -1,0 +1,45 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+LORA_DIR ?= /opt/LoRa
+LORA_INSTALL_DIR = $(INSTALL_DIR)/$(LORA_DIR)
+
+LORA_BIN_DIR = $(LORA_INSTALL_DIR)/bin
+LORA_CONFIG_DIR = $(LORA_INSTALL_DIR)/bin
+
+TARGET_NAME = sx1302_hal
+GIT_URI = https://github.com/Lora-net/sx1302_hal
+SRC_DIR = $(BUILD_DIR)/$(TARGET_NAME)
+TARGETS = $(SRC_DIR)/packet_forwarder/lora_pkt_fwd
+
+all: $(SRC_DIR) $(LORA_INSTALL_DIR) $(LORA_BIN_DIR) $(LORA_CONFIG_DIR) $(TARGETS) 
+	install -D $(SRC_DIR)/packet_forwarder/lora_pkt_fwd $(LORA_BIN_DIR)/lora_pkt_fwd
+	install -D $(SRC_DIR)/VERSION $(LORA_BIN_DIR)
+	cp -R $(PATCHES_DIR)/lpf_1302/* $(INSTALL_DIR)
+#	install -D $(SRC_DIR)/lora_pkt_fwd/update_gwid.sh $(LORA_BIN_DIR)/update_gwid.sh
+#	install -d $(LORA_CONFIG_DIR)
+#	install -D $(SRC_DIR)/lora_pkt_fwd/global.conf $(LORA_CONFIG_DIR)/global.conf
+#	cp $(SRC_DIR)/lora_pkt_fwd/local_conf.json $(LORA_CONFIG_DIR)/
+#	cat $(SRC_DIR)/cfg/global_conf.json.PCB_E286.EU868.gps | \
+#        sed 's|/dev/ttyAMA0|/dev/ttyS1|' | \
+#        sed 's/localhost/192.168.30.55/' \
+#        > $(LORA_CONFIG_DIR)/config.json
+	
+#	$(MAKE) -j$(MAKE_JOBS) -C $(SRC_DIR)
+
+$(TARGETS):
+	$(MAKE) -j$(MAKE_JOBS) -C $(SRC_DIR)
+
+$(LORA_INSTALL_DIR) $(LORA_CONFIG_DIR) $(LORA_BIN_DIR):
+	mkdir -p $@
+
+$(SRC_DIR):
+	git clone $(GIT_URI) $@
+#	cd $(SRC_DIR) && \
+    patch -p1 < $(PWD)/patches/leds_support_4.x.patch 
+    
+#    
+#    patch -p1 < $(PWD)/patches/bs1x_fix_spi_dev.patch
+
+
+

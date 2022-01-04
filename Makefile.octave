@@ -1,0 +1,54 @@
+include env.mk
+
+#https://ftp.gnu.org/gnu/octave/octave-6.2.0.tar.gz
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = octave
+TARGET_VERSION = 6.2.0
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://ftp.gnu.org/gnu/$(TARGET_NAME)/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/$(TARGET_NAME)
+TARGET = $(INSTALL_DIR)/bin/$(TARGET_NAME)
+#BUILD_OPTS = PREFIX=$(INSTALL_DIR) 
+
+$(TARGET): $(TARGET_BIN) 
+	make -j $(MAKE_JOBS) -C $(TARGET_DIR) install
+
+$(TARGET_BIN): $(TARGET_DIR) $(TARGET_DIR)/Makefile
+#	LDFLAGS=-L$(INSTALL_DIR)/lib 
+	make -j $(MAKE_JOBS) -C $(TARGET_DIR) $(BUILD_OPTS)
+    
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+	F77=/usr/bin/arm-linux-gnueabi-gfortran-8 \
+	./configure \
+	    ${CONFIGURE_FLAGS} \
+        --prefix=$(INSTALL_DIR) \
+        --enable-fortran-calling-convention=gfortran
+
+	CC=$(CROSS_COMPILE)gcc \
+
+        
+#        --target=arm-linux \
+#        --host=arm-linux \
+#        --build=i686-pc-linux-gnu \
+        
+#        --cross_compile=$(CROSS_COMPILE) \
+
+#        --cc=gcc \
+#        --cflags=-I$(INSTALL_DIR)/include    \
+#        --disable-plugins \
+#        --disable-debug
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH):
+	wget $(SRC_URI) -O $@
+
+

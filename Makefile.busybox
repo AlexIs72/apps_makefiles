@@ -1,0 +1,57 @@
+include env.mk
+
+#Alternately, use the O=$BUILDPATH option (with an absolute path) during the
+#configuration step, as in:
+#
+#  make O=/some/empty/directory allyesconfig
+#  cd /some/empty/directory
+#  make
+#  make PREFIX=. install
+#
+
+TARGET_NAME = busybox
+TARGET_VERSION = 1.31.1
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.bz2
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://busybox.net/downloads/$(TARGET_ARCH_NAME)
+
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/$(TARGET_NAME)
+INSTALL_DIR ?= $(TARGET_DIR)/.install
+TARGET = $(INSTALL_DIR)/bin/$(TARGET_NAME)
+BUILD_OPTS = CONFIG_PREFIX=$(INSTALL_DIR) 
+
+
+
+
+$(TARGET): $(TARGET_DIR) $(TARGET_BIN)
+	$(LOCAL_MAKE) -C $(TARGET_DIR) $(BUILD_OPTS) install
+
+$(TARGET_BIN): $(TARGET_DIR)/.config
+	$(LOCAL_MAKE) -C $(TARGET_DIR) CONFIG_STATIC=y $(BUILD_OPTS) 
+#	busybox.cfg.suid
+#	touch $@
+
+#CROSS_COMPILE=$(CROSS_COMPILE)
+
+$(TARGET_DIR)/.config:
+	cp $(PATCHES_DIR)/apps/busybox_config $(TARGET_DIR)/.config
+#make -C $(TARGET_DIR) $(BUILD_OPTS) defconfig 
+#sed -i 's/\(CONFIG_\)\(.*\)\(INETD\)\(.*\)=y/# \1\2\3\4 is not set/g' $(TARGET_DIR)/.config
+#sed -i 's/\(CONFIG_IFPLUGD\)=y/# \1 is not set/' $(TARGET_DIR)/.config
+#sed -i 's/\(CONFIG_FEATURE_WTMP\)=y/# \1 is not set/' $(TARGET_DIR)/.config
+#sed -i 's/\(CONFIG_FEATURE_UTMP\)=y/# \1 is not set/' $(TARGET_DIR)/.config
+#sed -i 's/\# CONFIG_STATIC is not set/CONFIG_STATIC=y/' $(TARGET_DIR)/.config
+#sed -i 's/\# CONFIG_FLASH_ERASEALL is not set/CONFIG_FLASH_ERASEALL=y/' $(TARGET_DIR)/.config
+#	mv $(TARGET_DIR)/.config.new $(TARGET_DIR)/.config
+#	touch $@
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH): 
+	wget $(SRC_URI) -O $@
+
+

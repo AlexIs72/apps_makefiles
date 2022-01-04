@@ -1,0 +1,43 @@
+include env.mk
+
+#SRC = http://www.tcpdump.org/release/libpcap-1.10.0.tar.gz
+
+
+TARGET_NAME = libpcap
+TARGET_VERSION = 1.10.0
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = http://www.tcpdump.org/release/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/libpcap.so.$(TARGET_VERSION)
+INSTALL_DIR ?= $(TARGET_DIR)/.install
+TARGET = $(INSTALL_DIR)/lib/libpcap.so.$(TARGET_VERSION)
+#UILD_OPTS = PREFIX=$(INSTALL_DIR) CROSS_COMPILE=$(CROSS_COMPILE)
+OPTS = CFLAGS=-I$(INSTALL_DIR)/include/libnl3
+#CC=$(CROSS_COMPILE)gcc 
+
+
+$(TARGET): $(TARGET_DIR) $(TARGET_BIN) 
+	make -j $(MAKE_JOBS) -C $(TARGET_DIR) $(BUILD_OPTS) install
+
+$(TARGET_BIN): $(TARGET_DIR)/Makefile
+	make -j $(MAKE_JOBS) -C $(TARGET_DIR) $(BUILD_OPTS)
+
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+	$(OPTS) ./configure \
+        --prefix=$(INSTALL_DIR) \
+        ${CONFIGURE_FLAGS} \
+        --without-libnl
+
+#        --target=$(ARM_HOST) \
+#        --host=$(ARM_HOST) \
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH):
+	wget $(SRC_URI) -O $@
+

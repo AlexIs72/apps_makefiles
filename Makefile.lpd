@@ -1,0 +1,29 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+#LORA_DIR ?= $(INSTALL_DIR)/LoRa
+TARGET_DIR = $(INSTALL_DIR)/$(LORA_BIN_DIR)
+
+TARGET_NAME = lora_pkt_decoder
+GIT_URI = git@111.111.11.11:software/iot/lora-packet-decoder.git
+SRC_DIR = $(BUILD_DIR)/lora-packet-decoder
+LPD_BUILD_DIR = $(SRC_DIR)/.build
+TARGET = $(LPD_BUILD_DIR)/$(TARGET_NAME)
+
+all: $(SRC_DIR) $(LPD_BUILD_DIR) $(TARGET) 
+	cp $(TARGET) $(TARGET_DIR)
+
+$(TARGET):
+#	cd $(LPD_BUILD_DIR)/.build && 
+	/usr/bin/cmake -S $(SRC_DIR) -B $(LPD_BUILD_DIR) -DCMAKE_CXX_COMPILER=$(CROSS_COMPILE)g++ 
+	$(MAKE) -j$(MAKE_JOBS) -C $(SRC_DIR)/.build
+
+$(LPD_BUILD_DIR):
+	mkdir -p $@
+
+$(SRC_DIR):
+	/usr/bin/git clone $(GIT_URI) $@
+#	sed -i 's/CC=gcc/CC?=gcc/' $@/Makefile
+
+
+

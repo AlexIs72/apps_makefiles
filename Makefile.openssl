@@ -1,0 +1,40 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = openssl
+TARGET_VERSION = 1.1.1g
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://www.openssl.org/source/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/apps/$(TARGET_NAME)
+TARGET = $(INSTALL_DIR)/bin/$(TARGET_NAME)
+
+
+$(TARGET): $(TARGET_DIR) $(TARGET_BIN) 
+	$(LOCAL_MAKE) -C $(TARGET_DIR) $(BUILD_OPTS) install
+
+$(TARGET_BIN): $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) -C $(TARGET_DIR) $(BUILD_OPTS)
+    
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+	    ./Configure \
+        linux-generic32 \
+        no-asm shared no-async \
+        --openssldir=$(INSTALL_DIR)/etc/ssl \
+	    --prefix=$(INSTALL_DIR) \
+	    --cross-compile-prefix=$(CROSS_COMPILE)
+
+#	CC=$(CROSS_COMPILE)gcc \
+	
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH):
+	wget $(SRC_URI) -O $@
+
+

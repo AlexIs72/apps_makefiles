@@ -1,0 +1,33 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+#LORA_DIR ?= $(INSTALL_DIR)/LoRa
+LORA_INSTALL_DIR = $(INSTALL_DIR)/$(LORA_DIR)
+LORA_BIN_DIR = $(LORA_INSTALL_DIR)/bin
+
+TARGET_NAME = lora_gateway
+GIT_URI = https://github.com/Lora-net/$(TARGET_NAME).git
+SRC_DIR = $(BUILD_DIR)/$(TARGET_NAME)
+TARGETS = $(SRC_DIR)/libloragw/libloragw.a
+
+all: $(SRC_DIR) $(LORA_BIN_DIR) $(TARGETS) 
+#	mkdir -p $(LORA_DIR)/bin
+	cp -a $(SRC_DIR)/libloragw/test_loragw* $(LORA_BIN_DIR)
+	cat $(SRC_DIR)/reset_lgw.sh | \
+	    sed 's/IOT_SK_SX1301_RESET_PIN=7/IOT_SK_SX1301_RESET_PIN=115/' \
+	    > $(LORA_BIN_DIR)/reset_lgw.sh
+	chmod +x $(LORA_BIN_DIR)/reset_lgw.sh
+	find $(SRC_DIR) -type f -executable -name "util_*" -exec cp '{}' $(LORA_BIN_DIR)/ \;
+
+$(TARGETS):
+	$(MAKE) -j$(MAKE_JOBS) -C $(SRC_DIR)
+
+$(LORA_BIN_DIR):
+	mkdir -p $@
+
+$(SRC_DIR):
+	git clone $(GIT_URI) $@
+	cd $@ && patch -p1 < $(PWD)/patches/bs1x_fix_spi_dev.patch
+
+
+

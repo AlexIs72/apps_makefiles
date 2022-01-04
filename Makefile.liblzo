@@ -1,0 +1,64 @@
+include env.mk
+
+#SRC = http://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = lzo
+TARGET_VERSION = 2.10
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = http://www.oberhumer.com/opensource/lzo/download/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/src/liblzo2.la
+TARGET = $(INSTALL_DIR)/lib/liblzo2.la
+
+
+$(TARGET): $(TARGET_DIR) $(TARGET_BIN) 
+	$(LOCAL_MAKE) -C $(TARGET_DIR) install
+	libtool --finish $(INSTALL_DIR)/lib
+
+$(TARGET_BIN): $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) -C $(TARGET_DIR)
+    
+#CROSS_COMPILE=$(CROSS_COMPILE)
+
+
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+	CC=$(CROSS_COMPILE)gcc \
+	./configure \
+        --prefix=$(INSTALL_DIR) \
+        --target=$(ARM_HOST) \
+        --host=$(ARM_HOST) \
+        --enable-static=no \
+        --enable-shared=yes
+        
+        
+        
+#        --build=i686-pc-linux-gnu \
+#        --enable-static \
+#        --enable-shared \
+#        --enable-small \
+#        --disable-plugins \
+#        --disable-debug
+	
+	
+#	./configure --prefix=$(INSTALL_DIR) \
+#	    --target=arm-linux-gnueabi \
+#	    --host=arm-linux-gnueabi \
+#	    --prefix=/home/user/vpn_compile --disable-server --enable-static --disable-shared --disable-debug --disable-plugins 
+#	    --cross-compile-prefix=$(CROSS_COMPILE)
+#	make -C $(TARGET_DIR) $(BUILD_OPTS) defconfig 
+
+#	make -C $(TARGET_DIR) $(BUILD_OPTS) defconfig 
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH): 
+	wget $(SRC_URI) -O $@
+
+

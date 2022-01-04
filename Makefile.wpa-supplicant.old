@@ -1,0 +1,119 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = wpa_supplicant
+TARGET_VERSION = 2.9
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://w1.fi/releases/$(TARGET_ARCH_NAME)
+
+#LIBNL_LIB_DIR    =   $(INSTALL_DIR)
+#/libnl_lib
+#DBUS_LIB_DIR     =   $(INSTALL_DIR)
+#/dbus_lib
+
+TARGET_DIR = $(BUILD_DIR)/wpa_supplicant_0.8_rtw_arm-master
+#$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/$(TARGET_NAME)/$(TARGET_NAME)
+TARGET = $(INSTALL_DIR)//usr/local/sbin/$(TARGET_NAME)
+#BUILD_OPTS = PREFIX=$(INSTALL_DIR) 
+PKG_CONFIGS      =   $(INSTALL_DIR)/lib/pkgconfig:$(INSTALL_DIR)/lib/pkgconfig
+
+export PKG_CONFIG_PATH=$(PKG_CONFIGS)
+#$(INSTALL_DIR)/lib/pkgconfig:$(INSTALL_DIR)/lib/pkgconfig
+
+$(TARGET): $(TARGET_BIN) 
+#$(TARGET_DIR)/$(TARGET_NAME)/.config
+	$(LOCAL_MAKE) -C $(TARGET_DIR)/$(TARGET_NAME) DESTDIR=$(INSTALL_DIR) install
+	$(LOCAL_MAKE) -C $(TARGET_DIR)/src DESTDIR=$(INSTALL_DIR) install
+	echo "WPA_SUPPLICANT_CTRL=/run/wpa_supplicant.ctrl" > $(INSTALL_DIR)/etc/default/wpa_supplicant
+	echo "WPA_SUPPLICANT_CFG=/etc/wpa_supplicant.conf" >> $(INSTALL_DIR)/etc/default/wpa_supplicant
+	echo "SSID=Vega_5_1" >>  $(INSTALL_DIR)/etc/default/wpa_supplicant
+#	echo "WLAN_IFACE=wlan0" >>  $(INSTALL_DIR)/etc/default/wpa_supplicant
+
+
+$(TARGET_DIR)/$(TARGET_NAME)/.config:
+	cp $(TARGET_DIR)/$(TARGET_NAME)/defconfig $@
+#	echo "CC=$(CROSS_COMPILE)gcc" >> $@
+#	echo "LD=$(CROSS_COMPILE)ld" >> $@
+#	echo "CFLAGSS += -I$(INSTALL_DIR)/include" >> $@
+#	echo "CFLAGSS += -I$(INSTALL_DIR)/include/dbus-1.0" >> $@
+#	echo "LIBS += -L$(INSTALL_DIR)/lib" >> $@
+#	echo "LIBS += -L$(DBUS_LIB_DIR)/lib" >> $@
+
+$(TARGET_BIN):
+#$(TARGET_DIR)/$(TARGET_NAME)/.config
+	PKG_CONFIG_PATH=$(PKG_CONFIGS) \
+	CC=$(CROSS_COMPILE)gcc \
+	LD=$(CROSS_COMPILE)ld \
+	LIBDIR=$(INSTALL_DIR)/lib \
+	CFLAGS="-I$(INSTALL_DIR)/include -I$(INSTALL_DIR)/include/dbus-1.0 -I$(INSTALL_DIR)/include/libnl3" \
+	LIBS="-L$(INSTALL_DIR)/lib" \
+	$(LOCAL_MAKE) -C $(TARGET_DIR)/$(TARGET_NAME)
+	PKG_CONFIG_PATH=$(PKG_CONFIGS) \
+	CC=$(CROSS_COMPILE)gcc \
+	LD=$(CROSS_COMPILE)ld \
+	CFLAGS="-I$(INSTALL_DIR)/include -I$(INSTALL_DIR)/include/dbus-1.0 " \
+	LIBS="-L$(INSTALL_DIR)/lib" \
+	$(LOCAL_MAKE) -C $(TARGET_DIR)/src
+
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH):
+	wget $(SRC_URI) -O $@
+
+$(INSTALL_DIR)/etc/default:
+	mkdir -p $@
+#-----
+
+
+
+#SHELL           =   /bin/bash
+#PKG_NAME        =   wpa_supplicant
+#TARGET_NAME     =   wpa-supplicant
+#ttps://hostap.epitest.fi/releases/wpa_supplicant-0.5.10.tar.gz
+#https://w1.fi/releases/wpa_supplicant-2.9.tar.gz
+#PKG_VERSION     =   2.9
+#PKG_FULL_NAME   =   $(PKG_NAME)-$(PKG_VERSION)
+#PKG_ARCHIVE     =   $(PKG_FULL_NAME).tar.gz
+#PKG_URL         =   https://w1.fi/releases/$(PKG_ARCHIVE)
+#PKG_SRC_DIR		=	$(BUILD_DIR)/$(PKG_FULL_NAME)
+#PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_FULL_NAME)
+#OPENSSL_LIB_DIR =   $(BUILD_DIR)/openssl_lib
+#PKG_TARGET_DIR  =   $(BUILD_DIR)/$(PKG_NAME)_lib
+#CONFIG_FILE     =   $(PKG_BUILD_DIR)/.config
+#PKG_CONFIGS      =   $(LIBNL_LIB_DIR)/lib/pkgconfig:$(DBUS_LIB_DIR)/lib/pkgconfig
+#BUILD_VARS      = PKG_CONFIG_PATH=$(PKG_CONFIGS) CC=$(CROSS_COMPILE)gcc LD=$(CROSS_COMPILE)ld 
+
+
+#export PKG_CONFIG_PATH=$(LIBNL_LIB_DIR)/lib/pkgconfig:$(DBUS_LIB_DIR)/lib/pkgconfig 
+
+#$(TARGET_NAME): $(PKG_BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)
+
+#$(PKG_BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME): $(PKG_SRC_DIR)/$(PKG_NAME)/.config
+#	PKG_CONFIG_PATH=$(PKG_CONFIGS) \
+#	CC=$(CROSS_COMPILE)gcc \
+#	LD=$(CROSS_COMPILE)ld 
+#	$(BUILD_VARS) make -C $(PKG_SRC_DIR)/$(PKG_NAME) 
+    
+#$(PKG_SRC_DIR): $(DL_DIR)/$(PKG_ARCHIVE)
+#	cd $(BUILD_DIR) && \
+#    tar -xzvf $(DL_DIR)/$(PKG_ARCHIVE) 
+
+install_$(TARGET_NAME):
+#	PKG_CONFIG_PATH=$(PKG_CONFIGS) 
+#	$(BUILD_VARS) make -C $(PKG_BUILD_DIR)/$(PKG_NAME) DESTDIR=$(TARGET_ROOTFS_DIR) install
+#$(DL_DIR)/$(PKG_ARCHIVE):
+#	wget --continue --directory-prefix=$(DL_DIR) $(PKG_URL)
+
+#$(PKG_BUILD_DIR)/$(PKG_NAME):
+#	mkdir -p $@
+
+#$(CONFIG_FILE): $(PKG_BUILD_DIR)
+#	cp $(PATCHES)/busybox_config $(PKG_BUILD_DIR)/.config 
+
+#prepare_$(TARGET_NAME): $(PKG_SRC_DIR) $(PKG_BUILD_DIR)/$(PKG_NAME)

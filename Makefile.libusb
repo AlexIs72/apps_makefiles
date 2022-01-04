@@ -1,0 +1,66 @@
+include env.mk
+
+#SRC = http://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
+
+TARGET_NAME = libusb
+TARGET_VERSION = 1.0.24
+#2.4.1
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.bz2
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://github.com/libusb/libusb/releases/download/v$(TARGET_VERSION)//$(TARGET_ARCH_NAME)
+#R_2_4_1/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/libusb/.libs/libusb-1.0.a
+INSTALL_DIR ?= $(TARGET_DIR)/.install
+TARGET = $(INSTALL_DIR)/lib/libusb-1.0.a
+#UILD_OPTS = PREFIX=$(INSTALL_DIR) CROSS_COMPILE=$(CROSS_COMPILE)
+#OPTS = CC=$(CROSS_COMPILE)gcc 
+
+
+$(TARGET): $(TARGET_BIN) 
+	make -j $(MAKE_JOBS) -C $(TARGET_DIR) $(BUILD_OPTS) install
+	libtool --finish $(INSTALL_DIR)/lib
+
+$(TARGET_BIN): $(TARGET_DIR) $(TARGET_DIR)/Makefile
+	make -j $(MAKE_JOBS) -C $(TARGET_DIR) $(BUILD_OPTS)
+    
+#CROSS_COMPILE=$(CROSS_COMPILE)
+
+
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && ./configure \
+    	${CONFIGURE_FLAGS} \
+        --prefix=$(INSTALL_DIR) \
+        
+        
+#        --target=arm-linux \
+#        --host=arm-linux \
+#        --enable-static=no \
+#        --enable-shared=yes
+        
+#        --build=i686-pc-linux-gnu \
+#        --enable-static \
+#        --enable-shared \
+#        --enable-small \
+#        --disable-plugins \
+#        --disable-debug
+	
+	
+#	./configure --prefix=$(INSTALL_DIR) \
+#	    --target=arm-linux-gnueabi \
+#	    --host=arm-linux-gnueabi \
+#	    --prefix=/home/user/vpn_compile --disable-server --enable-static --disable-shared --disable-debug --disable-plugins 
+#	    --cross-compile-prefix=$(CROSS_COMPILE)
+#	make -C $(TARGET_DIR) $(BUILD_OPTS) defconfig 
+
+#	make -C $(TARGET_DIR) $(BUILD_OPTS) defconfig 
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH): 
+	wget $(SRC_URI) -O $@
+
+

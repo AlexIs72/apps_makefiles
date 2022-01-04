@@ -1,0 +1,95 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = micropython
+TARGET_VERSION = 1.12
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.xz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://micropython.org/resources/source/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/ports/unix/$(TARGET_NAME)
+TARGET = $(INSTALL_DIR)/usr/local/bin/$(TARGET_NAME)
+#BUILD_OPTS = PREFIX=$(INSTALL_DIR) 
+
+$(TARGET):  $(TARGET_DIR)/mpy-cross/mpy-cross $(TARGET_BIN)
+	$(LOCAL_MAKE) -C $(TARGET_DIR)/ports/unix DESTDIR=$(INSTALL_DIR) install
+
+#	PKG_CONFIG_PATH="$(INSTALL_DIR)/lib/pkgconfig" \
+
+$(TARGET_BIN): $(TARGET_DIR) 
+	PKG_CONFIG_PATH="$(INSTALL_DIR)/lib/pkgconfig" \
+	$(LOCAL_MAKE) -C $(TARGET_DIR)/ports/unix 
+
+#	PKG_CONFIG_PATH="$(INSTALL_DIR)/lib/pkgconfig" \
+
+
+$(TARGET_DIR)/mpy-cross/mpy-cross: $(TARGET_DIR)
+	make V=1 -C $(TARGET_DIR)/mpy-cross -j$(MAKE_JOBS) CROSS_COMPILE=  
+#	INC=-I/usr/include
+#	SYSROOT=$(TOOLCHAIN_DIR)
+#	 CROSS_COMPILE=$(CROSS_COMPILE)
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH):
+	wget $(SRC_URI) -O $@
+
+
+
+#-----
+#SHELL           =   /bin/bash
+#https://micropython.org/resources/source/micropython-1.12.tar.xz
+#PKG_NAME        =   micropython
+#PKG_VERSION     =   1.12
+#PKG_FULL_NAME   =   $(PKG_NAME)-$(PKG_VERSION)
+#PKG_ARCHIVE     =   $(PKG_FULL_NAME).tar.xz
+#PKG_URL         =   https://micropython.org/resources/source/$(PKG_ARCHIVE)
+#PKG_SRC_DIR		=	$(SRC_DIR)/$(PKG_NAME)
+#PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_FULL_NAME)
+#
+#$(PKG_NAME): $(PKG_BUILD_DIR)/mpy-cross/mpy-cross $(PKG_BUILD_DIR)/$(PKG_NAME)
+#
+#$(PKG_BUILD_DIR)/$(PKG_NAME): 
+#	PKG_CONFIG_PATH="$(BUILD_DIR)/libffi_lib/lib/pkgconfig" \
+#    LD_LIBRARY_PATH="$(TOOLCHAIN_DIR)" \
+#    make V=1 -C $(PKG_BUILD_DIR)/ports/unix -j$(NUM_JOBS)  \
+#        ARCH=$(ARCH) \
+#        CROSS_COMPILE=$(CROSS_COMPILE) \
+#        SYSROOT=$(TOOLCHAIN_DIR)
+
+#        LDFLAGS="-L$(TOOLCHAIN_DIR)/usr/lib" 
+        
+#        CFLAGS="$(CFLAGS) -I $(BUILD_DIR)/libffi_lib/include"
+
+
+
+#        ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+
+#$(PKG_BUILD_DIR)/Makefile: $(PKG_BUILD_DIR)/configure
+#	cd $(PKG_BUILD_DIR) && \
+#    ./configure \
+#    --target=$(ARM_HOST) --host=$(ARM_HOST) \
+#    --prefix=$(TARGET_ROOTFS_DIR)
+
+#$(PKG_BUILD_DIR)/configure:
+#	cd $(PKG_BUILD_DIR) && ./autogen.sh
+
+#$(DL_DIR)/$(PKG_ARCHIVE):
+#	wget --continue --directory-prefix=$(DL_DIR) $(PKG_URL)
+
+#$(PKG_BUILD_DIR): $(DL_DIR)/$(PKG_ARCHIVE)
+#	cd $(BUILD_DIR) && \
+#    tar -xJvf $(DL_DIR)/$(PKG_ARCHIVE) && \
+#    touch $(PKG_BUILD_DIR)
+#
+#install_$(PKG_NAME):
+#	PKG_CONFIG_PATH="$(BUILD_DIR)/libffi_lib/lib/pkgconfig" \
+#    LD_LIBRARY_PATH="$(TOOLCHAIN_DIR)" \
+#	make -C $(PKG_BUILD_DIR)/ports/unix DESTDIR=$(TARGET_ROOTFS_DIR) install
+#
+#prepare_$(PKG_NAME): $(PKG_BUILD_DIR)
+###

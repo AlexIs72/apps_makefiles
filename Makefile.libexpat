@@ -1,0 +1,43 @@
+include env.mk
+
+INSTALL_DIR ?= $(PWD)/.install
+
+TARGET_NAME = expat
+TARGET_VERSION = 2.2.7
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://github.com/libexpat/libexpat/releases/download/R_2_2_7/$(TARGET_ARCH_NAME)
+#https://github.com/libexpat/libexpat/releases/download/R_2_2_7/expat-2.2.7.tar.gz
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/expat/lib/.libs/$(TARGET_NAME).so.$(TARGET_VERSION)
+TARGET = $(INSTALL_DIR)/lib/$(TARGET_NAME).so.$(TARGET_VERSION)
+
+$(TARGET): $(TARGET_DIR) $(TARGET_BIN)
+	$(LOCAL_MAKE) -C $(TARGET_DIR) install
+
+$(TARGET_BIN): $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) -C $(TARGET_DIR)
+
+#$(TARGET_DIR)/expat/configure:
+#	cd $(TARGET_DIR)/expat && ./buildconf.sh
+
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+    ./configure \
+    --target=$(ARM_HOST) --host=$(ARM_HOST) \
+    --prefix=$(INSTALL_DIR) \
+    --without-docbook \
+    --without-examples \
+    --without-tests
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH):
+	wget $(SRC_URI) -O $@
+
+#	CC=$(CROSS_COMPILE)gcc \
+
+

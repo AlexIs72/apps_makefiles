@@ -1,0 +1,39 @@
+include env.mk
+
+#SRC = https://www.infradead.org/~tgr/libnl/files/libnl-3.2.25.tar.gz
+
+
+TARGET_NAME = libnl
+TARGET_VERSION = 3.2.25
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://www.infradead.org/~tgr/libnl/files/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)
+TARGET_BIN = $(TARGET_DIR)/lib/.libs/$(TARGET_NAME)-3.so
+INSTALL_DIR ?= $(TARGET_DIR)/.install
+TARGET = $(INSTALL_DIR)/lib/$(TARGET_NAME)-3.so
+#UILD_OPTS = PREFIX=$(INSTALL_DIR) CROSS_COMPILE=$(CROSS_COMPILE)
+OPTS = ACLOCAL=/usr/bin/aclocal-1.16 AUTOMAKE=/usr/bin/automake-1.16
+
+
+$(TARGET): $(TARGET_BIN) 
+	$(LOCAL_MAKE) -C $(TARGET_DIR) install
+
+$(TARGET_BIN): $(TARGET_DIR) $(TARGET_DIR)/Makefile
+	$(LOCAL_MAKE) -C $(TARGET_DIR)
+
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && $(OPTS) ./configure \
+        --prefix=$(INSTALL_DIR) \
+        --target=$(ARM_HOST) \
+        --host=$(ARM_HOST)
+
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH): 
+	wget $(SRC_URI) -O $@
+
+

@@ -1,0 +1,78 @@
+TARGET          =   libgpgerror
+SHELL           =   /bin/bash
+PKG_NAME        =   libgpg-error
+PKG_VERSION     =   1.38
+#https://gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.38.tar.bz2
+PKG_FULL_NAME   =   $(PKG_NAME)-$(PKG_VERSION)
+PKG_ARCHIVE     =   $(PKG_FULL_NAME).tar.bz2
+PKG_URL         =   https://gnupg.org/ftp/gcrypt/$(PKG_NAME)/$(PKG_ARCHIVE)
+PKG_SRC_DIR		=	$(SRC_DIR)/$(PKG_NAME)
+#$(PKG_FULL_NAME)
+PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_FULL_NAME)
+PKG_TARGET_DIR  =   $(BUILD_DIR)/$(PKG_NAME)_lib
+#LIBEXPAT_LIB_DIR =   $(BUILD_DIR)/libexpat_lib
+#LZO_LIB_DIR     =   $(BUILD_DIR)/lzo_lib
+#PKG_TARGET_DIR  =   $(BUILD_DIR)/$(PKG_NAME)_lib
+#CONFIG_FILE     =   $(PKG_BUILD_DIR)/.config
+
+$(TARGET): $(PKG_NAME)
+
+$(PKG_NAME): $(PKG_BUILD_DIR)/$(PKG_NAME)
+
+$(PKG_BUILD_DIR)/$(PKG_NAME): $(PKG_BUILD_DIR)/Makefile
+#$(PKG_SRC_DIR)
+	make V=1 -C $(PKG_BUILD_DIR)/src -j$(NUM_JOBS) \
+        ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) gen-posix-lock-obj
+	make V=1 -C $(PKG_BUILD_DIR) -j$(NUM_JOBS) \
+        ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+	make -C $(PKG_BUILD_DIR) CONFIG_PREFIX=$(PKG_TARGET_DIR) install
+
+#O=$(PKG_BUILD_DIR) 
+
+$(PKG_BUILD_DIR)/Makefile:
+	cd $(PKG_BUILD_DIR) && \
+    build=`build-aux/config.guess` && \
+    ./configure \
+    --target=$(ARM_HOST) --host=$(ARM_HOST) \
+    --build=$$build
+    --prefix=$(PKG_TARGET_DIR) 
+
+#    --disable-nls \
+#    --disable-languages \
+
+#    --sysroot=$(TOOLCHAIN_DIR)
+
+#    --without-docbook \
+#    --without-examples \
+#    --without-tests
+
+#    linux-generic32 \
+#    no-asm shared no-async \
+#    --openssldir=$(TARGET_ROOTFS_DIR)/etc/ssl \
+#    --prefix=$(PKG_TARGET_DIR)  \
+#    --cross-compile-prefix=$(CROSS_COMPILE)
+#gcc -static -no-shared  --cross-compile-prefix=$(CROSS_COMPILE)
+#--prefix=/home/user/vpn_compile
+
+$(PKG_BUILD_DIR): $(DL_DIR)/$(PKG_ARCHIVE)
+	cd $(BUILD_DIR) && \
+    tar -xjvf $(DL_DIR)/$(PKG_ARCHIVE) && \
+	touch $(PKG_SRC_DIR)
+
+install_$(TARGET):
+	cp -aR $(PKG_TARGET_DIR)/{bin,lib} $(TARGET_ROOTFS_DIR)/usr
+	find $(TARGET_ROOTFS_DIR)/usr/lib  -name "*.a" -o -name "*.la" | xargs rm -f
+
+$(DL_DIR)/$(PKG_ARCHIVE):
+	wget --continue --directory-prefix=$(DL_DIR) $(PKG_URL)
+
+#$(PKG_BUILD_DIR)/expat:
+#	mkdir -p $@
+
+#$(CONFIG_FILE): $(PKG_BUILD_DIR)
+#	cp $(PATCHES)/busybox_config $(PKG_BUILD_DIR)/.config 
+
+#$(PKG_BUILD_DIR)/configure: $(PKG_BUILD_DIR)
+#	cd $(PKG_BUILD_DIR)/expat && ./buildconf.sh
+
+prepare_$(TARGET): $(PKG_BUILD_DIR)

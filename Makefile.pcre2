@@ -1,0 +1,66 @@
+SHELL           =   /bin/bash
+PKG_NAME        =   pcre2
+PKG_VERSION     =   10.33
+#https://ftp.pcre.org/pub/pcre/pcre2-10.33.tar.gz
+PKG_FULL_NAME   =   $(PKG_NAME)-$(PKG_VERSION)
+PKG_ARCHIVE     =   $(PKG_FULL_NAME).tar.gz
+PKG_URL         =   https://ftp.pcre.org/pub/pcre/$(PKG_ARCHIVE)
+PKG_SRC_DIR		=	$(SRC_DIR)/$(PKG_NAME)
+#$(PKG_FULL_NAME)
+PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_FULL_NAME)
+PKG_TARGET_DIR  =   $(BUILD_DIR)/$(PKG_NAME)_lib
+#LIBEXPAT_LIB_DIR =   $(BUILD_DIR)/libexpat_lib
+#LZO_LIB_DIR     =   $(BUILD_DIR)/lzo_lib
+#PKG_TARGET_DIR  =   $(BUILD_DIR)/$(PKG_NAME)_lib
+#CONFIG_FILE     =   $(PKG_BUILD_DIR)/.config
+
+$(PKG_NAME): $(PKG_BUILD_DIR)/src/$(PKG_NAME)
+
+$(PKG_BUILD_DIR)/src/$(PKG_NAME): $(PKG_BUILD_DIR)/Makefile
+#$(PKG_SRC_DIR)
+	make V=1 -C $(PKG_BUILD_DIR)/expat -j$(NUM_JOBS) \
+        ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+	make -C $(PKG_BUILD_DIR)/expat CONFIG_PREFIX=$(PKG_TARGET_DIR) install
+
+#O=$(PKG_BUILD_DIR) 
+
+$(PKG_BUILD_DIR)/Makefile:
+	cd $(PKG_BUILD_DIR)/expat && \
+    ./configure \
+    --target=$(ARM_HOST) --host=$(ARM_HOST) \
+    --prefix=$(PKG_TARGET_DIR) 
+
+#    --without-docbook \
+#    --without-examples \
+#    --without-tests
+
+#    linux-generic32 \
+#    no-asm shared no-async \
+#    --openssldir=$(TARGET_ROOTFS_DIR)/etc/ssl \
+#    --prefix=$(PKG_TARGET_DIR)  \
+#    --cross-compile-prefix=$(CROSS_COMPILE)
+#gcc -static -no-shared  --cross-compile-prefix=$(CROSS_COMPILE)
+#--prefix=/home/user/vpn_compile
+
+$(PKG_BUILD_DIR): $(DL_DIR)/$(PKG_ARCHIVE)
+	cd $(BUILD_DIR) && \
+    tar -xzvf $(DL_DIR)/$(PKG_ARCHIVE) && \
+	touch $(PKG_SRC_DIR)
+
+install_$(PKG_NAME):
+	cp -aR $(PKG_TARGET_DIR)/{bin,lib} $(TARGET_ROOTFS_DIR)/usr
+	find $(TARGET_ROOTFS_DIR)/usr/lib  -name "*.a" -o -name "*.la" | xargs rm -f
+
+$(DL_DIR)/$(PKG_ARCHIVE):
+	wget --continue --directory-prefix=$(DL_DIR) $(PKG_URL)
+
+#$(PKG_BUILD_DIR)/expat:
+#	mkdir -p $@
+
+#$(CONFIG_FILE): $(PKG_BUILD_DIR)
+#	cp $(PATCHES)/busybox_config $(PKG_BUILD_DIR)/.config 
+
+$(PKG_BUILD_DIR)/expat/configure: $(PKG_BUILD_DIR)
+	cd $(PKG_BUILD_DIR)/expat && ./buildconf.sh
+
+prepare_$(PKG_NAME): $(PKG_BUILD_DIR)

@@ -1,0 +1,51 @@
+include env.mk
+
+#SRC = https://www.openssl.org/source/openssl-1.1.1j.tar.gz
+
+
+TARGET_NAME = binutils
+TARGET_VERSION = 2.36
+#https://ftp.gnu.org/gnu/binutils/binutils-2.36.tar.gz
+TARGET_FULL_NAME = $(TARGET_NAME)-$(TARGET_VERSION)
+TARGET_ARCH_NAME = $(TARGET_FULL_NAME).tar.gz
+TARGET_ARCH = $(DL_DIR)/$(TARGET_ARCH_NAME)
+SRC_URI = https://ftp.gnu.org/gnu/binutils/$(TARGET_ARCH_NAME)
+
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_FULL_NAME)/bfd
+TARGET_BIN = $(TARGET_DIR)/.libs/libbfd.a
+INSTALL_DIR ?= $(TARGET_DIR)/.install
+TARGET = $(INSTALL_DIR)/lib/libbfd.a
+#UILD_OPTS = PREFIX=$(INSTALL_DIR) CROSS_COMPILE=$(CROSS_COMPILE)
+#CC=$(CROSS_COMPILE)gcc 
+
+
+$(TARGET): $(TARGET_DIR) $(TARGET_BIN) 
+#	make -j $(MAKE_JOBS) -C $(TARGET_DIR) install
+	cp $(TARGET_BIN) $(@)
+	cp $(TARGET_DIR)/*.h $(INSTALL_DIR)/include
+
+$(TARGET_BIN): $(TARGET_DIR)/Makefile
+	make -j $(MAKE_JOBS) -C $(TARGET_DIR) 
+#$(BUILD_OPTS)
+    
+$(TARGET_DIR)/Makefile:
+	cd $(TARGET_DIR) && \
+	    ./configure \
+	    ${CONFIGURE_FLAGS} \
+	    --prefix=$(INSTALL_DIR) 
+
+#	CC=$(CROSS_COMPILE)gcc \
+#	AR=$(CROSS_COMPILE)ar \
+
+#        --target=$(ARM_HOST) \
+#        --host=$(ARM_HOST) \
+	    
+#	    --cross-compile-prefix=$(CROSS_COMPILE)
+	
+$(TARGET_DIR): $(TARGET_ARCH)
+	tar -C $(BUILD_DIR) -xmvf $(TARGET_ARCH)
+
+$(TARGET_ARCH):
+	wget $(SRC_URI) -O $@
+
+

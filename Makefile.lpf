@@ -1,0 +1,38 @@
+TARGET          =   lpf
+PKG_URI         =   git@111.111.11.11:/lora_packet_forwarder.git
+PKG_NAME        =   lora_packet_forwarder
+PKG_SRC_DIR     =   $(BUILD_DIR)/$(PKG_NAME)
+PKG_BUILD_DIR   =   $(BUILD_DIR)/$(PKG_NAME)
+TARGET_DIR      =   $(TARGET_ROOTFS_DIR)/opt/LoRa
+
+
+$(TARGET): $(PKG_NAME)
+
+$(PKG_NAME):
+	cd $(PKG_BUILD_DIR) && git remote show origin && \
+    has_changes=$$(git remote show origin | grep "local out of date" || true) && \
+    if [ ! -z "$${has_changes}" ]; then git pull; fi
+	make -C $(PKG_BUILD_DIR)
+
+install_$(TARGET):
+	mkdir -p $(TARGET_DIR)
+	cp $(PKG_BUILD_DIR)/util_ack/util_ack $(TARGET_DIR)
+	cp $(PKG_BUILD_DIR)/util_sink/util_sink $(TARGET_DIR)
+#	cp $(PKG_BUILD_DIR)/util_spectral_scan/util_spectral_scan $(TARGET_DIR)
+#	cp $(PKG_BUILD_DIR)/util_spi_stress/util_spi_stress $(TARGET_DIR)
+#	cp $(PKG_BUILD_DIR)/util_tx_continuous/util_tx_continuous $(TARGET_DIR)
+	cp $(PKG_BUILD_DIR)/util_tx_test/util_tx_test $(TARGET_DIR)
+	cp $(PKG_BUILD_DIR)/lora_pkt_fwd/{lora_pkt_fwd,update_gwid.sh,*.json} $(TARGET_DIR)
+	cp -R $(PKG_BUILD_DIR)/lora_pkt_fwd/cfg $(TARGET_DIR)
+
+$(PKG_BUILD_DIR):
+	git clone $(PKG_URI) $@
+
+#$(PKG_BUILD_DIR):
+#	mkdir -p $@
+
+prepare_$(TARGET): $(PKG_BUILD_DIR)
+
+
+
+

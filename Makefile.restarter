@@ -1,0 +1,26 @@
+include env.mk
+
+INSTALL_DIR	?= .install
+#LORA_DIR ?= $(INSTALL_DIR)/LoRa
+TARGET_DIR = $(INSTALL_DIR)/usr/bin
+
+TARGET_NAME = restarter
+GIT_URI = https://bitbucket.org/sivann/restarter.git
+SRC_DIR = $(BUILD_DIR)/$(TARGET_NAME)
+TARGET = $(SRC_DIR)/$(TARGET_NAME)
+
+all: $(SRC_DIR) $(TARGET) 
+	cp $(TARGET) $(TARGET_DIR)
+
+$(TARGET):
+	$(MAKE) -j$(MAKE_JOBS) -C $(SRC_DIR) CC=$(CROSS_COMPILE)gcc
+
+#$(LORA_INSTALL_DIR) $(LORA_CONFIG_DIR) $(LORA_BIN_DIR):
+#	mkdir -p $@
+
+$(SRC_DIR):
+	/usr/bin/git clone $(GIT_URI) $@
+	sed -i 's/CC=gcc/CC?=gcc/' $@/Makefile
+
+
+
